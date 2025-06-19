@@ -138,7 +138,18 @@ Realiza y documenta en el repositorio las siguientes tareas:
 ### **Funciones en system.js**
 
 1. Crear una función llamada `escenariosPorCiudad(ciudad)` que devuelva todos los escenarios en esa ciudad.
+
+    ### Respuesta: function escenariosPorCiudad(ciudad) {return db.escenarios.find({ ciudad: ciudad }).toArray();}
+
+    **Para usarla: escenariosPorCiudad("Bogotá")**
+
+
 2. Crear una función llamada `bandasPorGenero(genero)` que devuelva todas las bandas activas de ese género.
+
+    ### Respuesta: function bandasPorGenero(genero) {return db.bandas.find({ genero: genero, activa: true }).toArray();}
+
+    **Para usarla: bandasPorGenero("Rock")**
+
 
 ---
 
@@ -147,9 +158,84 @@ Realiza y documenta en el repositorio las siguientes tareas:
 1. Simular compra de un boleto:
     - Insertar nuevo boleto en `boletos_comprados` de un asistente.
     - Disminuir en 1 la capacidad del escenario correspondiente.
+
+    ### Respuesta: 
+
+        const session = db.getMongo().startSession();
+        const dbSession = session.getDatabase("festival_conciertos");
+
+        try {
+          session.startTransaction();
+
+          // 1. Insertar nuevo boleto en el array de la asistente
+          dbSession.asistentes.updateOne(
+            { nombre: "María Gómez" },
+            {
+              $push: {
+                boletos_comprados: {
+                  escenario: "Escenario Alterno",
+                  dia: "2025-06-21"
+                }
+              }
+            }
+          );
+
+          // 2. Disminuir capacidad del escenario en 1
+          dbSession.escenarios.updateOne(
+            { nombre: "Escenario Alterno" },
+            { $inc: { capacidad: -1 } }
+          );
+
+          session.commitTransaction();
+          print("✅ Transacción completada correctamente");
+
+        } catch (e) {
+          session.abortTransaction();
+          print("❌ Error en la transacción:", e.message);
+        } finally {
+          session.endSession();
+        }
 2. Reversar la compra:
     - Eliminar el boleto insertado anteriormente.
     - Incrementar la capacidad del escenario.
+
+    ### Respuesta: 
+
+        const session = db.getMongo().startSession();
+        const dbSession = session.getDatabase("marioBrossDB");
+
+        try {
+          session.startTransaction();
+
+          // 1. Eliminar el boleto del array del asistente
+          dbSession.asistentes.updateOne(
+            { nombre: "María Gómez" },
+            {
+              $pull: {
+                boletos_comprados: {
+                  escenario: "Escenario Alterno",
+                  dia: "2025-06-21"
+                }
+              }
+            }
+          );
+
+          // 2. Incrementar la capacidad del escenario
+          dbSession.escenarios.updateOne(
+            { nombre: "Escenario Alterno" },
+            { $inc: { capacidad: 1 } }
+          );
+
+          session.commitTransaction();
+          print("✅ Reverso de compra completado correctamente");
+
+        } catch (e) {
+          session.abortTransaction();
+          print("❌ Error al reversar la compra:", e.message);
+        } finally {
+          session.endSession();
+        }
+
 
 ---
 
